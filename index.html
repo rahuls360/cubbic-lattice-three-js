@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Silicon | Three.JS</title>
+    <script src="https://unpkg.com/three@0.101.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.101.0/examples/js/WebGL.js"></script>
+    <script src="https://unpkg.com/three@0.101.0/examples/js/libs/stats.min.js"></script>
+    <script src="https://unpkg.com/three@0.101.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<script>
+  window.addEventListener('load', function() {
+    if ( !WEBGL.isWebGLAvailable() ) {
+      const warning = WEBGL.getWebGLErrorMessage();
+      document.getElementById('container').appendChild( warning );
+    }
+
+    let w = window.innerWidth, h = window.innerHeight;
+    let scene, bbox;
+    let container, renderer, camera, controls, stats;
+
+    // setup animation
+    (function init() {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(w, h);
+      container = document.getElementById('container');
+      // add renderer to DOM
+      container.appendChild(renderer.domElement);
+      // show animation stats in DOM
+      stats = new Stats();
+      container.appendChild(stats.dom);
+      stats.dom.style.position = 'absolute';
+
+      // create a scene
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x1E2630, 0.002);
+      renderer.setClearColor(scene.fog.color);
+
+      // setup camera
+      camera = new THREE.PerspectiveCamera(60, w / h, 1, 2000); // fov, aspect ratio, near range, far range
+      camera.position.x = 50;
+      camera.position.y = 50;
+      camera.position.z = 100;
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+      // add grid background
+      const gridXZ = new THREE.GridHelper(500, 10);
+      scene.add(gridXZ);
+
+      // setup light
+      let light = new THREE.DirectionalLight(0xffffff);
+      light.position.set(1, 1, 1);
+      scene.add(light);
+      light = new THREE.DirectionalLight(0x002288);
+      light.position.set(-1, -1, -1);
+      scene.add(light);
+      light = new THREE.AmbientLight(0x222222);
+      scene.add(light);
+
+      const geometry = new THREE.BoxGeometry(10, 10, 10);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+      });
+      const cube = new THREE.Mesh(geometry, material);
+      let translateY = 5;
+      cube.translateY(translateY);
+      bbox = new THREE.BoxHelper(cube, 0xffffff);
+      scene.add(bbox);
+
+      console.log(cube, 'vertices')
+      var circleGeometry = new THREE.SphereGeometry( 0, 50, 50 );
+      const circleMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+      });
+      // var sphere = new THREE.Mesh( circleGeometry, circleMaterial );
+      // scene.add( sphere );
+
+      // add sphere to all vertices of the cube
+      cube.geometry.vertices.forEach(vertice => {
+        let sphere = createSphere();
+        sphere.position.x = vertice.x;
+        sphere.position.y = vertice.y + translateY;
+        sphere.position.z = vertice.z;
+        scene.add( sphere );
+      })
+
+      // let vertices = cube.geometry.vertices;
+      // console.log(vertices, "face")
+      // for( let i=0; i< vertices.length - 1; i++){
+      //   let sphere = createSphere();
+      //   sphere.position.x = (vertices[i].x + vertices[i + 1].x)/2;
+      //   sphere.position.y = (vertices[i].y + vertices[i + 1].y)/2 + translateY;
+      //   sphere.position.z = (vertices[i].z + vertices[i + 1].z)/2;
+      //   if(sphere.position.z === 5 || sphere.position.z === -5){
+      //     sphere.position.x -= 5;
+      //   }
+      //   console.log(sphere.position)
+      //   scene.add( sphere );
+      // }
+      // let sphere = createSphere();
+      //   sphere.position.x = 
+      //   sphere.position.y = 
+      //   sphere.position.z = 
+
+      window.addEventListener('resize', onWindowResize, false);
+    })();
+
+    // create sphere
+    function createSphere(){
+      let circleGeometry = new THREE.SphereGeometry( 0, 50, 50 );
+      let circleMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+      });
+      return new THREE.Mesh( circleGeometry, circleMaterial );
+    }
+
+    // handle window resize
+    function onWindowResize() {
+      w = window.innerWidth;
+      h = window.innerHeight;
+
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    // continuous animation
+    (function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+      stats.update();
+    })();
+  });
+</script>
+</body>
+</html>
