@@ -27,7 +27,7 @@
     }
 
     let w = window.innerWidth, h = window.innerHeight;
-    let scene, bbox;
+    let scene, bbox, cube;
     let container, renderer, camera, controls, stats;
 
     // setup animation
@@ -76,19 +76,11 @@
       const material = new THREE.MeshBasicMaterial({
         color: 0xffffff,
       });
-      const cube = new THREE.Mesh(geometry, material);
+      cube = new THREE.Mesh(geometry, material);
       let translateY = 5;
       cube.translateY(translateY);
       bbox = new THREE.BoxHelper(cube, 0xffffff);
       scene.add(bbox);
-
-      console.log(cube, 'vertices')
-      var circleGeometry = new THREE.SphereGeometry( 0, 50, 50 );
-      const circleMaterial = new THREE.MeshBasicMaterial({
-        color: 0x333333,
-      });
-      // var sphere = new THREE.Mesh( circleGeometry, circleMaterial );
-      // scene.add( sphere );
 
       // add sphere to all vertices of the cube
       cube.geometry.vertices.forEach(vertice => {
@@ -99,23 +91,22 @@
         scene.add( sphere );
       })
 
-      // let vertices = cube.geometry.vertices;
-      // console.log(vertices, "face")
-      // for( let i=0; i< vertices.length - 1; i++){
-      //   let sphere = createSphere();
-      //   sphere.position.x = (vertices[i].x + vertices[i + 1].x)/2;
-      //   sphere.position.y = (vertices[i].y + vertices[i + 1].y)/2 + translateY;
-      //   sphere.position.z = (vertices[i].z + vertices[i + 1].z)/2;
-      //   if(sphere.position.z === 5 || sphere.position.z === -5){
-      //     sphere.position.x -= 5;
-      //   }
-      //   console.log(sphere.position)
-      //   scene.add( sphere );
-      // }
-      // let sphere = createSphere();
-      //   sphere.position.x = 
-      //   sphere.position.y = 
-      //   sphere.position.z = 
+      // add sphere to center of faces
+      let faces = geometry.faces;
+      var vertices = geometry.vertices;
+      faces.forEach(face => {
+        var v1 = vertices[face.a];
+        var v2 = vertices[face.b];
+        var v3 = vertices[face.c];
+
+        // calculate the center of faces
+        var sphere = createSphere();
+        sphere.position.x = uniqueAvg([v1.x, v2.x, v3.x]);
+        sphere.position.y = uniqueAvg([v1.y, v2.y, v3.y]) + translateY;
+        sphere.position.z = uniqueAvg([v1.z, v2.z, v3.z]);
+        scene.add(sphere); 
+      })
+
 
       window.addEventListener('resize', onWindowResize, false);
     })();
@@ -129,6 +120,20 @@
       return new THREE.Mesh( circleGeometry, circleMaterial );
     }
 
+    function uniqueAvg(arr) {
+      let unique = [];
+      arr.forEach(item => {
+        if(unique.indexOf(item) === -1){
+          unique.push(item)
+        }
+      });
+      if(unique.length > 1){
+        return unique.reduce((a, b) => a + b, 0) / 2;
+      }else {
+        return unique[0];
+      }
+    }
+
     // handle window resize
     function onWindowResize() {
       w = window.innerWidth;
@@ -138,10 +143,14 @@
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     }
+    
 
     // continuous animation
     (function animate() {
       requestAnimationFrame(animate);
+      cube.rotation.x +=.01;
+      cube.rotation.y += .01;
+      cube.rotation.z += .01;
       renderer.render(scene, camera);
       stats.update();
     })();
